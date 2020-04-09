@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<html lang="en">
+<head>
+    <title>Visualisation test</title>
+    <meta charset="utf-8" />
+       <link href="css/c3.min.css" rel="stylesheet" />
+       <!-- custom chart formatting -->
+       <link href="css/c3_bmt.css" rel="stylesheet" />
+       <!-- custom chart formatting -->
+    <script src="js/d3.v5.min.js" crossorigin="anonymous"></script>
+    <script src="js/c3.min.js" crossorigin="anonymous"></script>
+</head>
+
+  <body>
+  <div align="center"><p> <b> Data from https://www.bls.gov/ </b> </p></div>
+  <div align="center"><p> <b> Monthly labor data </b> </p></div>
+    <div align="center" id="chart1"></div>
+    <div align="center" id="legend_table">
+      <table>
+          <thead>
+              <tr>
+                  <th colspan="3" id="chart_title">Monthly Data</th>
+              </tr>
+              <tr>
+                <th>Code</th>
+                <th>Long Text</th>
+                <th>&nbsp &nbsp % &nbsp &nbsp</th>
+              </tr>
+          </thead>
+          <tbody id="table_body">
+          </tbody>
+      </table>
+    </div>
+
+
+    <script>
+      var dates
+      var months = ['', 'Jan', 'Feb', 'Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+      var elem_table_col3
+      var elem = document.getElementById("chart_title");
+      var table_body = document.getElementById("table_body");
+      elem.innerHTML =  "Monthly Data for : "+months[1]+" 2020"
+
+    d3.csv("data/legend_codes_names.csv").then(function(data_legends) {
+      console.log("loading data/legend_codes_names.csv")
+      for (let i = 0; i < data_legends.length; i++){
+        table_body.innerHTML += "<tr>" +
+                      "    <td>"+data_legends[i]['code']+"</td>" +
+                      "    <td>"+data_legends[i]['long_name']+"</td>" +
+                      "    <td id='"+data_legends[i]['code']+"'>&nbsp &nbsp &nbsp &nbsp</td>" +
+                      "</tr>";
+      }
+
+      d3.csv("data/dates.csv").then(function(data_dates) {
+        dates = data_dates
+        console.log("dates:", dates)
+        console.log("dates[0]['dates']:", dates[0]['dates'])
+        var chart = c3.generate({
+              title: {
+                show: false,
+                //text: '',
+                position: 'top-center',   // top-left, top-center and top-right
+                padding: {
+                  top: 20,
+                  right: 20,
+                  bottom: 20,
+                  left: 20
+                }
+              },data: {
+                url: 'data/0_test.csv',
+                type: 'bar'
+              },
+              bar: {
+                space: 0.25
+              },
+              bindto: '#chart1',
+              legend: {
+                  position: 'right'
+              },
+              transition: {
+                  duration: 2000
+              },
+              axis: {
+                  x: {
+                    show: false
+                  },
+                  y: {
+                      max:14,
+                      label: 'Unemployment Rate %',
+                      position: 'outer-middle'
+                  }
+              }
+        });
+        var counter = 1;
+        //setTimeout(function () {
+        setInterval(function () { //swap to setTimeout for debugging
+          var filename = 'data/'+counter.toString()+'_test.csv'
+          d3.csv(filename).then(function(data_month) {
+            console.log("data_month from file "+filename+": ", data_month)
+            console.log("data_month.length:", data_month.length)
+            console.log("data_month[0]:", data_month[0])
+            console.log("list keys = ", Object.keys(data_month[0]))
+            console.log("length keys", Object.keys(data_month[0]).length)
+            var keys_list = Object.keys(data_month[0])
+            for (let i = 0; i < keys_list.length; i++) {
+              console.log(keys_list[i]+":"+data_month[0][keys_list[i]])
+              elem_table_col3 = document.getElementById(keys_list[i]);
+              elem_table_col3.innerHTML = data_month[0][keys_list[i]]
+            }
+            console.log('LNS14000012', data_month[0]['LNS14000012'])
+            //console.log("updating data - using filename: "+filename)
+            var temp = dates[counter]['dates']
+            var month_int = parseInt(temp.slice(-2))
+            elem.innerHTML = "Monthly Data for : "+months[month_int]+" "+dates[counter]['dates'].substring(0,4);
+            chart.load({
+                url: filename
+            });
+            if (counter<223) {
+              counter += 1
+            } else {
+              counter = 0
+            }
+          });//end d3.csv(
+        }, 1000);//end setInterval(function
+
+      });//end d3.csv("data/dates.csv")
+    });
+
+    </script>
+  <p> ___ </p>
+  </body>
+</html>

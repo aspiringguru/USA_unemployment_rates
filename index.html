@@ -10,12 +10,22 @@
        <!-- custom chart formatting -->
     <script src="js/d3.v5.min.js" crossorigin="anonymous"></script>
     <script src="js/c3.min.js" crossorigin="anonymous"></script>
+    <!-- setup your own fontawesome kit. it's free. -->
+    <script src="https://kit.fontawesome.com/32c10aeba4.js" crossorigin="anonymous"></script>
 </head>
 
   <body>
-  <div align="center"><p> <b> Data from https://www.bls.gov/ </b> </p></div>
-  <div align="center"><p> <b> Monthly labor data </b> </p></div>
+    <div align="center"><p> <b> Data from https://www.bls.gov/ </b> </p></div>
+    <div align="center"><p> <b> Monthly labor data </b> </p></div>
     <div align="center" id="chart1"></div>
+    <div align="center">
+      <button id="myBtn_back_yr"><i class="fa fa-angle-double-left"></i></button>
+      <button id="myBtn_back1"><i class="fa fa-angle-left"></i></button>
+      <button id="myBtn_play"><i class="fa fa-play"></i></button>
+      <button id="myBtn_fwd1"><i class="fa fa-angle-right"></i></button>
+      <button id="myBtn_fwd_yr"><i class="fa fa-angle-double-right"></i></button>
+    </div>
+
     <div align="center" id="legend_table">
       <table>
           <thead>
@@ -35,15 +45,57 @@
 
 
     <script>
+
       var dates
+      var counter = 1;
       var months = ['', 'Jan', 'Feb', 'Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+      function formatDate(date_in) {
+        //var temp = dates[counter]['dates']
+        var month_int = parseInt(date_in.slice(-2))
+        return months[month_int]+" "+dates[counter]['dates'].substring(0,4);
+      }
+
       var elem_table_col3
       var elem = document.getElementById("chart_title");
       var table_body = document.getElementById("table_body");
-      elem.innerHTML =  "Monthly Data for : "+months[1]+" 2020"
+      elem.innerHTML =  "Monthly Data for : "+months[counter]+" 2000"
+
+      var running = false
+      var elem_button = document.getElementById("myBtn_play");
+      document.getElementById("myBtn_back_yr").addEventListener("click", function(){
+        //console.log("myBtn_back_yr button clicked");
+        if (counter>12){
+          counter -= 12;
+        }
+      });
+      document.getElementById("myBtn_back1").addEventListener("click", function(){
+        //console.log("myBtn_back1 button clicked");
+        if (counter>1){
+          counter -= 1;
+        }
+      });
+      document.getElementById("myBtn_fwd1").addEventListener("click", function(){
+        //console.log("myBtn_fwd1 button clicked");
+        counter += 1;
+      });
+      document.getElementById("myBtn_fwd_yr").addEventListener("click", function(){
+        //console.log("myBtn_fwd_yr button clicked");
+        counter += 12;
+      });
+
+      document.getElementById("myBtn_play").addEventListener("click", function(){
+        running = !running;
+        if (running) {
+          elem_button.innerHTML = "<i class='fa fa-stop-circle'></i>"
+        } else {
+          elem_button.innerHTML = "<i class='fa fa-play'></i>"
+        }
+        //console.log("myBtn button clicked, running=", running);
+      });
+
 
     d3.csv("data/legend_codes_names.csv").then(function(data_legends) {
-      console.log("loading data/legend_codes_names.csv")
+      //console.log("loading data/legend_codes_names.csv")
       for (let i = 0; i < data_legends.length; i++){
         table_body.innerHTML += "<tr>" +
                       "    <td>"+data_legends[i]['code']+"</td>" +
@@ -54,8 +106,8 @@
 
       d3.csv("data/dates.csv").then(function(data_dates) {
         dates = data_dates
-        console.log("dates:", dates)
-        console.log("dates[0]['dates']:", dates[0]['dates'])
+        //console.log("dates:", dates)
+        //console.log("dates[0]['dates']:", dates[0]['dates'])
         var chart = c3.generate({
               title: {
                 show: false,
@@ -92,38 +144,39 @@
                   }
               }
         });
-        var counter = 1;
+
+
+
         //setTimeout(function () {
         setInterval(function () { //swap to setTimeout for debugging
-          var filename = 'data/'+counter.toString()+'_test.csv'
-          d3.csv(filename).then(function(data_month) {
-            console.log("data_month from file "+filename+": ", data_month)
-            console.log("data_month.length:", data_month.length)
-            console.log("data_month[0]:", data_month[0])
-            console.log("list keys = ", Object.keys(data_month[0]))
-            console.log("length keys", Object.keys(data_month[0]).length)
-            var keys_list = Object.keys(data_month[0])
-            for (let i = 0; i < keys_list.length; i++) {
-              console.log(keys_list[i]+":"+data_month[0][keys_list[i]])
-              elem_table_col3 = document.getElementById(keys_list[i]);
-              elem_table_col3.innerHTML = data_month[0][keys_list[i]]
-            }
-            console.log('LNS14000012', data_month[0]['LNS14000012'])
-            //console.log("updating data - using filename: "+filename)
-            var temp = dates[counter]['dates']
-            var month_int = parseInt(temp.slice(-2))
-            elem.innerHTML = "Monthly Data for : "+months[month_int]+" "+dates[counter]['dates'].substring(0,4);
-            chart.load({
-                url: filename
-            });
-            if (counter<223) {
-              counter += 1
-            } else {
-              counter = 0
-            }
-          });//end d3.csv(
+          if (running){
+            var filename = 'data/'+counter.toString()+'_test.csv'
+            d3.csv(filename).then(function(data_month) {
+              //console.log("data_month from file "+filename+": ", data_month)
+              //console.log("data_month.length:", data_month.length)
+              //console.log("data_month[0]:", data_month[0])
+              //console.log("list keys = ", Object.keys(data_month[0]))
+              //console.log("length keys", Object.keys(data_month[0]).length)
+              var keys_list = Object.keys(data_month[0])
+              for (let i = 0; i < keys_list.length; i++) {
+                //console.log(keys_list[i]+":"+data_month[0][keys_list[i]])
+                elem_table_col3 = document.getElementById(keys_list[i]);
+                elem_table_col3.innerHTML = data_month[0][keys_list[i]]
+              }
+              //console.log('LNS14000012', data_month[0]['LNS14000012'])
+              //console.log("updating data - using filename: "+filename)
+              elem.innerHTML = "Monthly Data for : "+formatDate(dates[counter]['dates'])
+              chart.load({
+                  url: filename
+              });
+              if (counter<223) {
+                counter += 1
+              } else {
+                counter = 0
+              }
+            });//end d3.csv(
+          }//end if running
         }, 1000);//end setInterval(function
-
       });//end d3.csv("data/dates.csv")
     });
 
